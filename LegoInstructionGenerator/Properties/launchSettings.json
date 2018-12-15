@@ -2,7 +2,7 @@
   "profiles": {
     "LegoInstructionGenerator": {
       "commandName": "Project",
-      "commandLineArgs": "-i C:\\Users\\cha\\Pictures\\2018-12\\4"
+      "commandLineArgs": "-i C:\\Users\\usr\\Pictures\\2018-12\\5 -x 155 -o C:\\Users\\usr\\Documents\\Lego"
     }
   }
 }

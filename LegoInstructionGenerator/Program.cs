@@ -1,6 +1,8 @@
 ﻿using System;
-using CommandLine;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using CommandLine;
 
 namespace LegoInstructionGenerator
 {
@@ -8,18 +10,38 @@ namespace LegoInstructionGenerator
     {
         private static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<Options>(args).WithParsed(o =>
+            CommandLine.Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
             {
-                Console.WriteLine($"Generating from {o.InputPath}");
-                if (string.IsNullOrEmpty(o.OutputPath))
+                Console.WriteLine($"Generating from {options.InputPath}");
+                if (string.IsNullOrEmpty(options.OutputPath))
                 {
-                    o.OutputPath = Path.Combine(Path.GetTempPath(), new Guid().ToString());
-                    Directory.CreateDirectory(o.OutputPath);
+                    options.OutputPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                    Directory.CreateDirectory(options.OutputPath);
                 }
-                Console.WriteLine($"Generating to {o.OutputPath}");
+
+                Console.WriteLine($"Generating to {options.OutputPath}");
+
+                MainAsync(options).Wait();
             });
 
-            Console.Read();
+            // Console.ReadLine();
+        }
+
+        private static async Task MainAsync(Options options)
+        {
+            var parser = new Parser.Parser();
+            var pages = await parser.Parse(options.InputPath, options.StartIndex);
+            Console.WriteLine($"Parsed {pages.Count} pages");
+
+            Console.Write("Generating ");
+            foreach (var page in pages)
+            {
+                var generator = new Generator.Generator();
+                generator.Generate(options.InputPath, page, options.OutputPath, options.Verbose);
+                Console.Write(".");
+            }
+
+            Console.WriteLine();
         }
 
         public class Options
@@ -29,6 +51,12 @@ namespace LegoInstructionGenerator
 
             [Option('o', "output", Required = false, HelpText = "Output path where the instruction is generated to.")]
             public string OutputPath { get; set; }
+
+            [Option('v', "verbose", Required = false, HelpText = "Print input file names to output.", Default = false)]
+            public bool Verbose { get; set; }
+
+            [Option('x', "startIndex", Required = false, HelpText = "Set start index.", Default = 1)]
+            public int StartIndex { get; set; }
         }
     }
 }
